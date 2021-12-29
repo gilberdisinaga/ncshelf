@@ -1,0 +1,2 @@
+# ncshelf
+Ncurses dialog bookshelf
