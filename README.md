@@ -10,4 +10,5 @@ ncshelf is an ncurses-based file organizing utility for books, using dialog for 
 
 ## To-do
 - [ ] Add reordering books menu
+- [ ] Add search feature
 - [ ] Remove path and extension from new book's author and title input box
