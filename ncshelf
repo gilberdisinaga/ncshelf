@@ -1,0 +1,180 @@
+#!/bin/zsh
+
+mainmenu()
+{
+	opt=$(dialog --nocancel --keep-tite --title "Main Menu" --menu \
+		"Choose one of the following options:" 0 0 0 \
+		1 'Add a new book' 2 'View bookshelf' \
+		3 'Edit bookshelf' 4 'Exit' \
+		3>&1 1>&2 2>&3 3>&1) 
+
+	if [[ $opt == 1 ]]
+	then
+		bp=$(dialog --fselect /home/ 30 100 \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $bp == "" ]]
+		then
+			exit
+		fi
+		ba=$(dialog --keep-tite --inputbox \
+			"Enter book's author(s)" 10 100 $bp \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $ba == "" ]]
+		then
+			exit
+		fi
+		bt=$(dialog --keep-tite --inputbox \
+			"Enter book's title:" 10 100 $bp \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $bt == "" ]]
+		then
+			exit
+		fi
+		if [[ $bp != "" ]] && [[ $ba != "" ]] && [[ $bt != "" ]]
+		then
+			echo $bp >> texts/file_path.txt
+			echo $ba >> texts/author.txt
+			echo $bt >> texts/title.txt
+		else
+			exit
+		fi
+		bookshelf
+	elif [[ $opt == 2 ]]
+	then
+		bookshelf
+	elif [[ $opt == 3 ]]
+	then
+		editshelf
+	elif [[ $opt == 4 ]]
+	then
+		exit
+	fi
+}
+
+listing()
+{
+	count=0
+	a_arr=()
+	while IFS="\n" read -r author
+	do
+		count=$[count + 1]
+		a_arr+=($author )
+	done < texts/author.txt
+
+	t_arr=()
+	while IFS="\n" read -r title
+	do
+		t_arr+=($title )
+	done < texts/title.txt
+
+	str=''
+	menuopt=()
+	for i in $(seq 1 $count)
+	do
+		str="${a_arr[$i]} - ${t_arr[$i]}"
+		menuopt+=($i $str )
+	done
+}
+
+bookshelf()
+{
+	listing
+	choices=$(dialog --title "Bookshelf" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select books:" 20 100 $count ${menuopt} \
+		3>&1 1>&2 2>&3 3>&1)
+	ifopt
+}
+
+editshelf()
+{
+	listing
+	choices=$(dialog --ascii-lines --title "Edit Bookshelf" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select books:" 20 100 $count ${menuopt} \
+		3>&1 1>&2 2>&3 3>&1)
+	ifopt
+}
+
+ifopt()
+{
+	if [[ $choices != "" ]]
+	then
+		if [[ $opt == 1 ]] || [[ $opt == 2 ]]
+		then
+			readbook
+		elif [[ $opt == 3 ]]
+		then
+			edit
+		fi
+	else
+		mainmenu
+	fi
+}
+
+readbook()
+{
+	count=0
+	while IFS="\n" read -r bookpath
+	do
+		count=$[count + 1]
+		if [[ $count == $choices ]]
+		then
+			zathura $bookpath
+			bookshelf
+		fi
+	done < texts/file_path.txt
+	if [[ $choices == "" ]]
+	then
+		mainmenu
+	fi
+}
+
+edit()
+{
+	editmenu=$(dialog --ascii-lines --cancel-label "Back" --keep-tite --menu \
+		"Choose one of the following options:" 0 0 0 \
+		1 'Edit author' 2 'Edit title' 3 'Edit file path' 4 'Delete book' \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $editmenu == 1 ]]
+	then
+		toedit=`awk NR==$choices texts/author.txt`
+		ea=$(dialog --ascii-lines --keep-tite --inputbox \
+			"Enter book's author(s)" 10 100 $toedit \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $ea != "" ]]
+		then
+			sed -i "$choices"\s"/$toedit/$ea/" texts/author.txt
+		fi
+		edit
+	elif [[ $editmenu == 2 ]]
+	then
+		toedit=`awk NR==$choices texts/title.txt`
+		et=$(dialog --ascii-lines --keep-tite --inputbox \
+			"Enter book's title" 10 100 $toedit \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $et != "" ]]
+		then
+			sed -i "$choices"\s"/$toedit/$et/" texts/title.txt
+		fi
+		edit
+	elif [[ $editmenu == 3 ]]
+	then
+		toedit=`awk NR==$choices texts/file_path.txt`
+		ef=$(dialog --ascii-lines --fselect /home/ 30 100 \
+			3>&1 1>&2 2>&3 3>&1)
+		if [[ $ef != "" ]]
+		then
+			sed -i "$choices"\s">$toedit>$ef>" texts/file_path.txt
+		fi
+		edit
+	elif [[ $editmenu == 4 ]]
+	then
+		sed -i "$choices"\d"" texts/author.txt
+		sed -i "$choices"\d"" texts/title.txt
+		sed -i "$choices"\d"" texts/file_path.txt
+		editshelf
+	else
+		editshelf
+	fi
+}
+
+mainmenu
