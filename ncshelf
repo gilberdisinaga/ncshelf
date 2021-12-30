@@ -5,7 +5,9 @@ mainmenu()
 	opt=$(dialog --nocancel --keep-tite --title "Main Menu" --menu \
 		"Choose one of the following options:" 0 0 0 \
 		1 'Add a new book' 2 'View bookshelf' \
-		3 'Edit bookshelf' 4 'Exit' \
+		3 'Edit bookshelf' 4 'Reorder books' \
+		5 'Search books' \
+		6 'Exit' \
 		3>&1 1>&2 2>&3 3>&1) 
 
 	if [[ $opt == 1 ]]
@@ -46,6 +48,12 @@ mainmenu()
 	then
 		editshelf
 	elif [[ $opt == 4 ]]
+	then
+		reorder
+	elif [[ $opt == 5 ]]
+	then
+		search
+	elif [[ $opt == 6 ]]
 	then
 		exit
 	fi
@@ -104,6 +112,9 @@ ifopt()
 		elif [[ $opt == 3 ]]
 		then
 			edit
+		elif [[ $opt == 4 ]]
+		then
+			readbook
 		fi
 	else
 		mainmenu
@@ -175,6 +186,56 @@ edit()
 	else
 		editshelf
 	fi
+}
+
+reorder()
+{
+	listing
+	choices=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select a book to be moved:" 20 100 $count ${menuopt} \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $choices == "" ]]
+	then
+		mainmenu
+	fi
+	choices2=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select position:" 20 100 $count ${menuopt} \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $choices2 == "" ]]
+	then
+		reorder
+	fi
+	
+	tomove1=`awk NR==$choices texts/author.txt`
+	tomove2=`awk NR==$choices texts/title.txt`
+	tomove3=`awk NR==$choices texts/file_path.txt`
+
+	pos1=`awk NR==$choices2 texts/author.txt`
+	pos2=`awk NR==$choices2 texts/title.txt`
+	pos3=`awk NR==$choices2 texts/file_path.txt`
+
+	if [[ $choices == $choices2 ]]
+	then
+		reorder
+	elif [[ $choices -gt $choices2 ]]
+	then
+		sed -i "$choices"\d"" texts/author.txt
+		sed -i "/"\^"$pos1/i $tomove1" texts/author.txt
+		sed -i "$choices"\d"" texts/title.txt
+		sed -i "/"\^"$pos2/i $tomove2" texts/title.txt
+		sed -i "$choices"\d"" texts/file_path.txt
+		sed -i "$choices2 i $tomove3" texts/file_path.txt
+	elif [[ $choices -lt $choices2 ]]
+	then
+		sed -i "$choices"\d"" texts/author.txt
+		sed -i "/^$pos1/a $tomove1" texts/author.txt
+		sed -i "$choices"\d"" texts/title.txt
+		sed -i "/^$pos2/a $tomove2" texts/title.txt
+		sed -i "$choices"\d"" texts/file_path.txt
+		sed -i "$choices2 a $tomove3" texts/file_path.txt
+	fi
+
+	reorder
 }
 
 mainmenu
