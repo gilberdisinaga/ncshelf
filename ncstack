@@ -32,7 +32,7 @@ mainmenu()
 
 addbook()
 {
-	bp=$(dialog --fselect /home/gbd/Books/ 30 150 \
+	bp=$(dialog --fselect /home/ 30 150 \
 		3>&1 1>&2 2>&3 3>&1)
 	if [[ $bp == "" ]]
 	then
