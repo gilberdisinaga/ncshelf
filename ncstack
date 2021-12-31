@@ -2,63 +2,31 @@
 
 mainmenu()
 {
-	opt=$(dialog --nocancel --title "Main Menu" --menu \
-		"Choose one of the following options:" 0 0 0 \
-		1 'Add a new book' 2 'View book stack' \
-		3 'Edit book stack' 4 'Reorder books' \
-		5 'Search books' \
-		6 'Exit' \
-		3>&1 1>&2 2>&3 3>&1) 
-	if [[ $opt == 1 ]]
-	then
-		addbook
-	elif [[ $opt == 2 ]]
-	then
-		bookstack
-	elif [[ $opt == 3 ]]
-	then
-		editstack
-	elif [[ $opt == 4 ]]
-	then
-		orderstack
-	elif [[ $opt == 5 ]]
-	then
-		search
-	elif [[ $opt == 6 ]]
-	then
-		exit
-	fi
+	opt=$(dialog --nocancel --title "Main Menu" --menu \ "Choose one of the following options:" 0 0 0 \
+	1 'Add a new book' 2 'View book stack' \
+	3 'Edit book stack' 4 'Reorder books' \
+	5 'Search books' 6 'Exit' \
+	3>&1 1>&2 2>&3 3>&1) 
+	[[ $opt == 1 ]] && addbook
+	[[ $opt == 2 ]] && bookstack
+	[[ $opt == 3 ]] && editstack
+	[[ $opt == 4 ]] && orderstack
+	[[ $opt == 5 ]] && search
+	[[ $opt == 6 ]] && clear; exit
 }
 
 addbook()
 {
-	bp=$(dialog --fselect /home/ 30 150 \
-		3>&1 1>&2 2>&3 3>&1)
-	if [[ $bp == "" ]]
-	then
-		mainmenu
-	fi
+	bp=$(dialog --fselect /home/ 30 150 3>&1 1>&2 2>&3 3>&1)
+	[[ -z $bp ]] && mainmenu
 	filename=`basename "$bp" | sed 's/\.[^.]*$//'`
-	ba=$(dialog --inputbox \
-		"Enter book's author(s)" 10 100 $filename \
-		3>&1 1>&2 2>&3 3>&1)
-	if [[ $ba == "" ]]
-	then
-		mainmenu
-	fi
-	bt=$(dialog --inputbox \
-		"Enter book's title:" 10 100 $filename \
-		3>&1 1>&2 2>&3 3>&1)
-	if [[ $bt == "" ]]
-	then
-		mainmenu
-	fi
-	if [[ $bp != "" ]] && [[ $ba != "" ]] && [[ $bt != "" ]]
-	then
-		echo $bp >> texts/file_path.txt
-		echo $ba >> texts/author.txt
-		echo $bt >> texts/title.txt
-	fi
+	ba=$(dialog --inputbox "Enter book's author(s)" 10 100 $filename 3>&1 1>&2 2>&3 3>&1)
+	[[ -z $ba ]] && mainmenu
+	bt=$(dialog --inputbox "Enter book's title:" 10 100 $filename 3>&1 1>&2 2>&3 3>&1)
+	[[ -z $bt ]] && mainmenu
+	echo $bp >> texts/file_path.txt
+	echo $ba >> texts/author.txt
+	echo $bt >> texts/title.txt
 	bookstack
 }
 
@@ -90,80 +58,64 @@ listing()
 listingse()
 {
 	grepawk=`grep -n $inp texts/$txt | awk -F ":" '{print $1}'`
-	if [[ $grepawk == "" ]]
-	then
-		dialog --msgbox "$inp not found." 0 0
-		search
-	else
-		count=0
-		arr=()
-		str=''
-		while IFS="\n" read -r ln
-		do
-			count=$[count + 1]
-			ttl=`awk NR==$ln texts/title.txt`
-			aut=`awk NR==$ln texts/author.txt`
-			str="$aut - $ttl"
-			arr+=($ln $str )
-		done <<< $grepawk
-		if [[ ${arr} == "" ]]
-		then
-			dialog --msgbox "Add a book first." 0 0 
-			mainmenu
-		else
-			searchstack
-		fi
-	fi
+	[[ -z $grepawk ]] && dialog --msgbox "$inp not found." 0 0 && search
+	[[ -z $grepawk ]] || \
+	count=0
+	arr=()
+	str=''
+	while IFS="\n" read -r ln
+	do
+		count=$[count + 1]
+		ttl=`awk NR==$ln texts/title.txt`
+		aut=`awk NR==$ln texts/author.txt`
+		str="$aut - $ttl"
+		arr+=($ln $str )
+	done <<< $grepawk
+	[[ -z ${arr} ]] && dialog --msgbox "Add a book first." 0 0 && mainmenu
+	[[ -z ${arr} ]] || searchstack
 }
 
 bookstack()
 {
 	listing
-	if [[ ${menuopt} == "" ]]
-	then
-		dialog --msgbox "Add a book first." 0 0 
-		mainmenu
-	fi
+	nobookmsg
 	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --menu \
-		"Select a book to read:" 0 0 $count ${menuopt} \
-		3>&1 1>&2 2>&3 3>&1)
+	"Select a book to read:" 0 0 $count ${menuopt} \
+	3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
 
 editstack()
 {
 	listing
-	if [[ ${menuopt} == "" ]]
-	then
-		dialog --msgbox "Add a book first." 0 0 
-		mainmenu
-	fi
+	nobookmsg
 	choices=$(dialog --ascii-lines --title "Edit Book Stack" --cancel-label "Main Menu" --menu \
-		"Select a book to edit:" 0 0 $count ${menuopt} \
-		3>&1 1>&2 2>&3 3>&1)
+	"Select a book to edit:" 0 0 $count ${menuopt} \
+	3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
 
 orderstack()
 {
 	listing
-	if [[ ${menuopt} == "" ]]
-	then
-		dialog --msgbox "Add a book first." 0 0 
-		mainmenu
-	fi
+	nobookmsg
 	choices=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --menu \
-		"Select a book to move:" 0 0 $count ${menuopt} \
-		3>&1 1>&2 2>&3 3>&1)
+	"Select a book to move:" 0 0 $count ${menuopt} \
+	3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
 
 searchstack()
 {
 	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --menu \
-		"Select a book to read:" 0 0 $count ${arr} \
-		3>&1 1>&2 2>&3 3>&1)
+	"Select a book to read:" 0 0 $count ${arr} \
+	3>&1 1>&2 2>&3 3>&1)
 	ifopt
+}
+
+nobookmsg()
+{
+	[[ -z ${menuopt} ]] && dialog --msgbox "Add a book first." 0 0 && mainmenu
 }
 
 
@@ -195,16 +147,9 @@ readbook()
 	while IFS="\n" read -r bookpath
 	do
 		count=$[count + 1]
-		if [[ $count == $choices ]]
-		then
-			zathura $bookpath
-			bookstack
-		fi
+		[[ $count == $choices ]] && zathura $bookpath && bookstack
 	done < texts/file_path.txt
-	if [[ $choices == "" ]]
-	then
-		mainmenu
-	fi
+	[[ -z $choices ]] && mainmenu
 }
 
 readbookse()
@@ -213,30 +158,23 @@ readbookse()
 	while IFS="\n" read -r bookpath
 	do
 		count=$[count + 1]
-		if [[ $count == $choices ]]
-		then
-			zathura $bookpath
-			searchstack
-		fi
+		[[ $count == $choices ]] && zathura $bookpath && searchstack
 	done < texts/file_path.txt
-	if [[ $choices == "" ]]
-	then
-		mainmenu
-	fi
+	[[ -z $choices ]] && mainmenu
 }
 
 edit()
 {
 	editmenu=$(dialog --ascii-lines --cancel-label "Back" --menu \
-		"Choose one of the following options:" 0 0 0 \
-		1 'Edit author' 2 'Edit title' 3 'Edit file path' 4 'Delete book' \
-		3>&1 1>&2 2>&3 3>&1)
+	"Choose one of the following options:" 0 0 0 \
+	1 'Edit author' 2 'Edit title' 3 'Edit file path' 4 'Delete book' \
+	3>&1 1>&2 2>&3 3>&1)
 	if [[ $editmenu == 1 ]]
 	then
 		toedit=`awk NR==$choices texts/author.txt`
 		ea=$(dialog --ascii-lines --inputbox \
-			"Enter book's author(s)" 10 100 $toedit \
-			3>&1 1>&2 2>&3 3>&1)
+		"Enter book's author(s)" 10 100 $toedit \
+		3>&1 1>&2 2>&3 3>&1)
 		if [[ $ea != "" ]]
 		then
 			sed -i "$choices"\s"/$toedit/$ea/" texts/author.txt
@@ -246,8 +184,8 @@ edit()
 	then
 		toedit=`awk NR==$choices texts/title.txt`
 		et=$(dialog --ascii-lines --inputbox \
-			"Enter book's title" 10 100 $toedit \
-			3>&1 1>&2 2>&3 3>&1)
+		"Enter book's title" 10 100 $toedit \
+		3>&1 1>&2 2>&3 3>&1)
 		if [[ $et != "" ]]
 		then
 			sed -i "$choices"\s"/$toedit/$et/" texts/title.txt
@@ -257,7 +195,7 @@ edit()
 	then
 		toedit=`awk NR==$choices texts/file_path.txt`
 		ef=$(dialog --ascii-lines --fselect $toedit 30 150 \
-			3>&1 1>&2 2>&3 3>&1)
+		3>&1 1>&2 2>&3 3>&1)
 		if [[ $ef != "" ]]
 		then
 			sed -i "$choices"\s">$toedit>$ef>" texts/file_path.txt
@@ -265,9 +203,10 @@ edit()
 		edit
 	elif [[ $editmenu == 4 ]]
 	then
-		sed -i "$choices"\d"" texts/author.txt
-		sed -i "$choices"\d"" texts/title.txt
-		sed -i "$choices"\d"" texts/file_path.txt
+		for i in author.txt title.txt file_path.txt
+		do
+			sed -i "$choices"\d"" texts/$i
+		done
 		editstack
 	else
 		editstack
@@ -277,49 +216,39 @@ edit()
 reorder()
 {
 	choices2=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --menu \
-		"Select position:" 0 0 $count ${menuopt} \
-		3>&1 1>&2 2>&3 3>&1)
-	if [[ $choices2 == "" ]]
-	then
-		orderstack
-	fi
-	if [[ $choices == $choices2 ]]
-	then
-		orderstack
-	fi
-	if [[ $choices -gt $choices2 ]]
-	then
+	"Select position:" 0 0 $count ${menuopt} \
+	3>&1 1>&2 2>&3 3>&1)
+	[[ -z $choices2 ]] && orderstack
+	[[ $choices == $choices2 ]] && orderstack
+	[[ $choices -gt $choices2 ]] && \
 		for i in author.txt title.txt file_path.txt
 		do
 			var=`awk NR==$choices texts/$i`
 			sed -i "$choices"\d"" texts/$i
 			sed -i "$choices2 i $var" texts/$i
 		done
-
-	elif [[ $choices -lt $choices2 ]]
-	then
+	[[ $choices -lt $choices2 ]] && \
 		for i in author.txt title.txt file_path.txt
 		do
 			sed -i "$choices{h;d}; $choices2{p;x}" texts/$i
 		done
-	fi
 	orderstack
 }
 
 search()
 {
 	semenu=$(dialog --title "Search Books" --cancel-label "Main Menu" --menu \
-		"Choose one option:" 0 0 2 \
-		1 'Search for books by title' 2 'Search for books by author' \
-		3>&1 1>&2 2>&3 3>&1)
+	"Choose one option:" 0 0 2 \
+	1 'Search for books by title' 2 'Search for books by author' \
+	3>&1 1>&2 2>&3 3>&1)
 	if [[ $semenu == "" ]]
 	then
 		mainmenu
 	elif [[ $semenu == 1 ]]
 	then
 		inp=$(dialog --inputbox \
-			"Enter book's title" 10 100 \
-			3>&1 1>&2 2>&3 3>&1)
+		"Enter book's title" 10 100 \
+		3>&1 1>&2 2>&3 3>&1)
 		if [[ $inp == "" ]]
 		then
 			mainmenu
@@ -330,8 +259,8 @@ search()
 	elif [[ $semenu == 2 ]]
 	then
 		inp=$(dialog --inputbox \
-			"Enter book's author" 10 100 \
-			3>&1 1>&2 2>&3 3>&1)
+		"Enter book's author" 10 100 \
+		3>&1 1>&2 2>&3 3>&1)
 		if [[ $inp == "" ]]
 		then
 			mainmenu
