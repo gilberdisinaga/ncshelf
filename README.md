@@ -1,7 +1,7 @@
-# ncshelf
+# ncstack
 >A work in progress...
 
-ncshelf is an ncurses-based file organizing utility for books, using dialog as its user interface.
+ncstack is an ncurses-based file organizing utility for books. Using dialog as its user interface.
 
 ## Screenshots
 ![sc1](screenshots/1.png)
