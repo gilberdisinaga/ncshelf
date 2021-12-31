@@ -16,7 +16,7 @@ ncstack is a file organizing utility for books (or anything, by modifying the fi
 ## Setup
 1. Git clone this repo
 2. Empty the text files in `texts` directory
-3. Edit `ncstack`'s default directory for adding books for easy navigation
+3. Edit `ncstack`'s default directory for adding books (line 35) for easy navigation
 4. Run the script as like any other shell script
 5. Add new book first
 6. Enjoy, then!
