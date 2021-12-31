@@ -92,7 +92,7 @@ listingse()
 	grepawk=`grep -n $inp texts/$txt | awk -F ":" '{print $1}'`
 	if [[ $grepawk == "" ]]
 	then
-		dialog --msgbox "$inp not found." 20 50
+		dialog --msgbox "$inp not found." 0 0
 		search
 	else
 		count=0
@@ -125,7 +125,7 @@ bookstack()
 		mainmenu
 	fi
 	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --menu \
-		"Select books:" 0 0 $count ${menuopt} \
+		"Select a book to read:" 0 0 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
@@ -135,11 +135,11 @@ editstack()
 	listing
 	if [[ ${menuopt} == "" ]]
 	then
-		dialog --msgbox "Add a book first." 20 50 
+		dialog --msgbox "Add a book first." 0 0 
 		mainmenu
 	fi
 	choices=$(dialog --ascii-lines --title "Edit Book Stack" --cancel-label "Main Menu" --menu \
-		"Select books:" 20 100 $count ${menuopt} \
+		"Select a book to edit:" 0 0 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
@@ -149,11 +149,11 @@ orderstack()
 	listing
 	if [[ ${menuopt} == "" ]]
 	then
-		dialog --msgbox "Add a book first." 20 50 
+		dialog --msgbox "Add a book first." 0 0 
 		mainmenu
 	fi
 	choices=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --menu \
-		"Select a book to be moved:" 20 100 $count ${menuopt} \
+		"Select a book to move:" 0 0 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
@@ -161,7 +161,7 @@ orderstack()
 searchstack()
 {
 	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --menu \
-		"Select books:" 0 0 $count ${arr} \
+		"Select a book to read:" 0 0 $count ${arr} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
@@ -256,7 +256,7 @@ edit()
 	elif [[ $editmenu == 3 ]]
 	then
 		toedit=`awk NR==$choices texts/file_path.txt`
-		ef=$(dialog --ascii-lines --fselect /home/ 30 100 \
+		ef=$(dialog --ascii-lines --fselect $toedit 30 150 \
 			3>&1 1>&2 2>&3 3>&1)
 		if [[ $ef != "" ]]
 		then
@@ -277,7 +277,7 @@ edit()
 reorder()
 {
 	choices2=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --menu \
-		"Select position:" 20 100 $count ${menuopt} \
+		"Select position:" 0 0 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	if [[ $choices2 == "" ]]
 	then
@@ -320,15 +320,25 @@ search()
 		inp=$(dialog --inputbox \
 			"Enter book's title" 10 100 \
 			3>&1 1>&2 2>&3 3>&1)
-		txt="title.txt"
-		listingse
+		if [[ $inp == "" ]]
+		then
+			mainmenu
+		else
+			txt="title.txt"
+			listingse
+		fi
 	elif [[ $semenu == 2 ]]
 	then
 		inp=$(dialog --inputbox \
 			"Enter book's author" 10 100 \
 			3>&1 1>&2 2>&3 3>&1)
-		txt="author.txt"
-		listingse
+		if [[ $inp == "" ]]
+		then
+			mainmenu
+		else
+			txt="author.txt"
+			listingse
+		fi
 	fi
 }
 
