@@ -7,7 +7,6 @@ ncshelf is an ncurses-based file organizing utility for books, using dialog as i
 ![sc1](screenshots/1.png)
 ![sc2](screenshots/2.png)
 ![sc3](screenshots/3.png)
-![sc4](screenshots/4.png)
 
 ## Dependencies
 * dialog, sed, awk, grep

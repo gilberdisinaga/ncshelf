@@ -108,7 +108,7 @@ listingse()
 		done <<< $grepawk
 		if [[ ${arr} == "" ]]
 		then
-			dialog --msgbox "Add a book first." 20 50 
+			dialog --msgbox "Add a book first." 0 0 
 			mainmenu
 		else
 			searchstack
@@ -121,11 +121,11 @@ bookstack()
 	listing
 	if [[ ${menuopt} == "" ]]
 	then
-		dialog --msgbox "Add a book first." 20 50 
+		dialog --msgbox "Add a book first." 0 0 
 		mainmenu
 	fi
 	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --keep-tite --menu \
-		"Select books:" 20 100 $count ${menuopt} \
+		"Select books:" 0 0 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
