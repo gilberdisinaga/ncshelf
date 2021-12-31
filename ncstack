@@ -1,55 +1,26 @@
-#!/bin/zsh
+#!/usr/bin/zsh
 
 mainmenu()
 {
 	opt=$(dialog --nocancel --keep-tite --title "Main Menu" --menu \
 		"Choose one of the following options:" 0 0 0 \
-		1 'Add a new book' 2 'View bookshelf' \
-		3 'Edit bookshelf' 4 'Reorder books' \
+		1 'Add a new book' 2 'View book stack' \
+		3 'Edit book stack' 4 'Reorder books' \
 		5 'Search books' \
 		6 'Exit' \
 		3>&1 1>&2 2>&3 3>&1) 
-
 	if [[ $opt == 1 ]]
 	then
-		bp=$(dialog --fselect /home/ 30 100 \
-			3>&1 1>&2 2>&3 3>&1)
-		if [[ $bp == "" ]]
-		then
-			exit
-		fi
-		ba=$(dialog --keep-tite --inputbox \
-			"Enter book's author(s)" 10 100 $bp \
-			3>&1 1>&2 2>&3 3>&1)
-		if [[ $ba == "" ]]
-		then
-			exit
-		fi
-		bt=$(dialog --keep-tite --inputbox \
-			"Enter book's title:" 10 100 $bp \
-			3>&1 1>&2 2>&3 3>&1)
-		if [[ $bt == "" ]]
-		then
-			exit
-		fi
-		if [[ $bp != "" ]] && [[ $ba != "" ]] && [[ $bt != "" ]]
-		then
-			echo $bp >> texts/file_path.txt
-			echo $ba >> texts/author.txt
-			echo $bt >> texts/title.txt
-		else
-			exit
-		fi
-		bookshelf
+		addbook
 	elif [[ $opt == 2 ]]
 	then
-		bookshelf
+		bookstack
 	elif [[ $opt == 3 ]]
 	then
-		editshelf
+		editstack
 	elif [[ $opt == 4 ]]
 	then
-		reorder
+		orderstack
 	elif [[ $opt == 5 ]]
 	then
 		search
@@ -57,6 +28,38 @@ mainmenu()
 	then
 		exit
 	fi
+}
+
+addbook()
+{
+	bp=$(dialog --fselect /home/ 30 150 \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $bp == "" ]]
+	then
+		mainmenu
+	fi
+	filename=`basename "$bp" | sed 's/\.[^.]*$//'`
+	ba=$(dialog --keep-tite --inputbox \
+		"Enter book's author(s)" 10 100 $filename \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $ba == "" ]]
+	then
+		mainmenu
+	fi
+	bt=$(dialog --keep-tite --inputbox \
+		"Enter book's title:" 10 100 $filename \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $bt == "" ]]
+	then
+		mainmenu
+	fi
+	if [[ $bp != "" ]] && [[ $ba != "" ]] && [[ $bt != "" ]]
+	then
+		echo $bp >> texts/file_path.txt
+		echo $ba >> texts/author.txt
+		echo $bt >> texts/title.txt
+	fi
+	bookstack
 }
 
 listing()
@@ -84,23 +87,85 @@ listing()
 	done
 }
 
-bookshelf()
+listingse()
+{
+	grepawk=`grep -n $inp texts/$txt | awk -F ":" '{print $1}'`
+	if [[ $grepawk == "" ]]
+	then
+		dialog --msgbox "$inp not found." 20 50
+		search
+	else
+		count=0
+		arr=()
+		str=''
+		while IFS="\n" read -r ln
+		do
+			count=$[count + 1]
+			ttl=`awk NR==$ln texts/title.txt`
+			aut=`awk NR==$ln texts/author.txt`
+			str="$aut - $ttl"
+			arr+=($ln $str )
+		done <<< $grepawk
+		if [[ ${arr} == "" ]]
+		then
+			dialog --msgbox "Add a book first." 20 50 
+			mainmenu
+		else
+			searchstack
+		fi
+	fi
+}
+
+bookstack()
 {
 	listing
-	choices=$(dialog --title "Bookshelf" --cancel-label "Main Menu" --keep-tite --menu \
+	if [[ ${menuopt} == "" ]]
+	then
+		dialog --msgbox "Add a book first." 20 50 
+		mainmenu
+	fi
+	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --keep-tite --menu \
 		"Select books:" 20 100 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
 
-editshelf()
+editstack()
 {
 	listing
-	choices=$(dialog --ascii-lines --title "Edit Bookshelf" --cancel-label "Main Menu" --keep-tite --menu \
+	if [[ ${menuopt} == "" ]]
+	then
+		dialog --msgbox "Add a book first." 20 50 
+		mainmenu
+	fi
+	choices=$(dialog --ascii-lines --title "Edit Book Stack" --cancel-label "Main Menu" --keep-tite --menu \
 		"Select books:" 20 100 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	ifopt
 }
+
+orderstack()
+{
+	listing
+	if [[ ${menuopt} == "" ]]
+	then
+		dialog --msgbox "Add a book first." 20 50 
+		mainmenu
+	fi
+	choices=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select a book to be moved:" 20 100 $count ${menuopt} \
+		3>&1 1>&2 2>&3 3>&1)
+	ifopt
+}
+
+searchstack()
+{
+	choices=$(dialog --title "Book Stack" --cancel-label "Main Menu" --keep-tite --menu \
+		"Select books:" 20 100 $count ${arr} \
+		3>&1 1>&2 2>&3 3>&1)
+	ifopt
+}
+
 
 ifopt()
 {
@@ -114,7 +179,10 @@ ifopt()
 			edit
 		elif [[ $opt == 4 ]]
 		then
-			readbook
+			reorder
+		elif [[ $opt == 5 ]]
+		then
+			readbookse
 		fi
 	else
 		mainmenu
@@ -130,7 +198,25 @@ readbook()
 		if [[ $count == $choices ]]
 		then
 			zathura $bookpath
-			bookshelf
+			bookstack
+		fi
+	done < texts/file_path.txt
+	if [[ $choices == "" ]]
+	then
+		mainmenu
+	fi
+}
+
+readbookse()
+{
+	count=0
+	while IFS="\n" read -r bookpath
+	do
+		count=$[count + 1]
+		if [[ $count == $choices ]]
+		then
+			zathura $bookpath
+			searchstack
 		fi
 	done < texts/file_path.txt
 	if [[ $choices == "" ]]
@@ -182,60 +268,62 @@ edit()
 		sed -i "$choices"\d"" texts/author.txt
 		sed -i "$choices"\d"" texts/title.txt
 		sed -i "$choices"\d"" texts/file_path.txt
-		editshelf
+		editstack
 	else
-		editshelf
+		editstack
 	fi
 }
 
 reorder()
 {
-	listing
-	choices=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --keep-tite --menu \
-		"Select a book to be moved:" 20 100 $count ${menuopt} \
-		3>&1 1>&2 2>&3 3>&1)
-	if [[ $choices == "" ]]
-	then
-		mainmenu
-	fi
 	choices2=$(dialog --no-lines --title "Reorder Books" --cancel-label "Main Menu" --keep-tite --menu \
 		"Select position:" 20 100 $count ${menuopt} \
 		3>&1 1>&2 2>&3 3>&1)
 	if [[ $choices2 == "" ]]
 	then
-		reorder
+		orderstack
 	fi
-	
-	tomove1=`awk NR==$choices texts/author.txt`
-	tomove2=`awk NR==$choices texts/title.txt`
-	tomove3=`awk NR==$choices texts/file_path.txt`
-
-	pos1=`awk NR==$choices2 texts/author.txt`
-	pos2=`awk NR==$choices2 texts/title.txt`
-	pos3=`awk NR==$choices2 texts/file_path.txt`
-
 	if [[ $choices == $choices2 ]]
 	then
-		reorder
-	elif [[ $choices -gt $choices2 ]]
+		orderstack
+	fi
+	if [[ $choices -gt $choices2 ]]
 	then
-		sed -i "$choices"\d"" texts/author.txt
-		sed -i "/"\^"$pos1/i $tomove1" texts/author.txt
-		sed -i "$choices"\d"" texts/title.txt
-		sed -i "/"\^"$pos2/i $tomove2" texts/title.txt
-		sed -i "$choices"\d"" texts/file_path.txt
-		sed -i "$choices2 i $tomove3" texts/file_path.txt
+		# Not implemented yet
 	elif [[ $choices -lt $choices2 ]]
 	then
-		sed -i "$choices"\d"" texts/author.txt
-		sed -i "/^$pos1/a $tomove1" texts/author.txt
-		sed -i "$choices"\d"" texts/title.txt
-		sed -i "/^$pos2/a $tomove2" texts/title.txt
-		sed -i "$choices"\d"" texts/file_path.txt
-		sed -i "$choices2 a $tomove3" texts/file_path.txt
+		for i in author.txt title.txt file_path.txt
+		do
+			sed -i "$choices{h;d}; $choices2{p;x}" texts/$i
+		done
 	fi
+	orderstack
+}
 
-	reorder
+search()
+{
+	semenu=$(dialog --title "Search Books" --cancel-label "Main Menu" --keep-tite --menu \
+		"Choose one option:" 20 50 2 \
+		1 'Search for books by title' 2 'Search for books by author' \
+		3>&1 1>&2 2>&3 3>&1)
+	if [[ $semenu == "" ]]
+	then
+		mainmenu
+	elif [[ $semenu == 1 ]]
+	then
+		inp=$(dialog --keep-tite --inputbox \
+			"Enter book's title" 10 100 \
+			3>&1 1>&2 2>&3 3>&1)
+		txt="title.txt"
+		listingse
+	elif [[ $semenu == 2 ]]
+	then
+		inp=$(dialog --keep-tite --inputbox \
+			"Enter book's author" 10 100 \
+			3>&1 1>&2 2>&3 3>&1)
+		txt="author.txt"
+		listingse
+	fi
 }
 
 mainmenu

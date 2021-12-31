@@ -1,14 +1,20 @@
 # ncshelf
 >A work in progress...
 
-ncshelf is an ncurses-based file organizing utility for books, using dialog for its user interface.
+ncshelf is an ncurses-based file organizing utility for books, using dialog as its user interface.
+
+## Screenshots
+![sc1](screenshots/1.png)
+![sc2](screenshots/2.png)
+![sc3](screenshots/3.png)
+![sc4](screenshots/4.png)
 
 ## Dependencies
-* dialog
+* dialog, sed, awk, grep
 * zsh
-* zathura (could be changed by editing the script)
+* zathura (for reader, could be changed by editing the script)
 
 ## To-do
-- [ ] Add reordering books menu
-- [ ] Add search feature
-- [ ] Remove path and extension from new book's author and title input box
+- [ ] Add reordering books menu (almost done)
+- [x] Add search feature
+- [x] Remove path and extension from new book's author and title input box
