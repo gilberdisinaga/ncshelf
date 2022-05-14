@@ -1,5 +1,5 @@
 # ncstack
-ncstack is a file organizing utility for books (or anything, by modifying the file opener and some dialog's texts in order to avoid confusion). It has stack conception in mind wherein the books are arranged vertically, but recent books are inserted below the previous books instead of otherwise (could be rearranged manually in its specified menu).
+ncstack is a file organizing utility for books.
 
 ## Demo
 ![](demo.gif)
@@ -7,7 +7,7 @@ ncstack is a file organizing utility for books (or anything, by modifying the fi
 ## Dependencies
 * dialog, sed, awk, grep
 * zsh
-* zathura (for reader, could be changed by editing the script)
+* zathura
 
 ## Setup
 1. Git clone this repo
